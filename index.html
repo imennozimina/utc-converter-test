@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Time Converter</title>
+    <link rel="icon" type="image/png" href="img/time-clock.png">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #daede7;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #f0d3c1;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h2 {
+            text-align: center;
+            color: #4d6569;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #4d6569;
+        }
+        input, button {
+            display: block;
+            width: calc(100% - 22px);
+            margin-bottom: 10px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background: #c06471;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #db7886;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        .copyable-item {
+            color: #4d6569;
+            cursor: pointer;
+            position: relative;
+            padding: 5px;
+            background: #b2dbd3;
+            margin: 5px 0;
+            border-radius: 15px;
+            transition: background 0.3s;
+        }
+        .copyable-item:hover {
+            background: #75a29f;
+        }
+        .geo-label {
+            display: inline-block;
+            width: 80px;
+            height: 25px;
+            border: 1px solid #4d6569;
+            border-radius: 15px;
+            text-align: center;
+            vertical-align: super;
+            padding: 10px 10px 5px;
+            font-weight: bold;
+            margin-right: 10px;
+            background: #daede7;
+            color: #4d6569;
+        }
+        .copied {
+            position: absolute;
+            right: 10px;
+            background: #d4edda;
+            color: #155724;
+            padding: 5px;
+            border-radius: 3px;
+            font-size: 12px;
+            display: none;
+        }
+        .copy-content {
+            display: inline-block;
+            width: 80%;
+        }
+        .show-copied {
+            display: inline;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        .flatpickr-time .flatpickr-time-segment {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .flatpickr-time input {
+            border: none;
+            background-color: transparent;
+            font-size: 16px;
+            text-align: center;
+            width: 2em;
+            user-select: none; /* Убираем выделение текста */
+        }
+        .flatpickr-time input:focus, .flatpickr-time input:hover {
+            width: 100%;
+            outline: none; /* Убираем обводку */
+        }
+        .flatpickr-time input::selection {
+            background: none; /* Убираем выделение текста */
+        }
+        .flatpickr-time input::-moz-selection {
+            background: none; /* Убираем выделение текста */
+        }
+        .numInputWrapper span {
+            width: 20px;
+        }
+        .utc-options {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .utc-options input {
+            accent-color: #75a29f;
+            margin-right: 55px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Event Time Converter</h2>
+
+    <form id="timeForm">
+        <label for="startTime">Start Time:</label>
+        <input type="text" id="startTime" name="startTime" required>
+        <br>
+        <label for="endTime">End Time:</label>
+        <input type="text" id="endTime" name="endTime" required>
+        <!-- Добавляем радио-кнопки для выбора часового пояса -->
+        <div class="utc-options">
+            <label><input type="radio" name="timezone" value="UTC"> UTC 0</label>
+            <label><input type="radio" name="timezone" value="UTC+2"> UTC+2</label>
+            <label><input type="radio" name="timezone" value="UTC+3" checked> UTC+3</label>
+        </div>
+        <button type="button" onclick="convertTime()">Convert</button>
+    </form>
+
+    <div class="result" id="result"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon"></script>
+<script>
+    flatpickr("#startTime", {
+        enableTime: true,
+        dateFormat: "d-m-Y H:i",
+        time_24hr: true,
+        utc: true,
+        minuteIncrement: 1,
+        onChange: function (selectedDates, dateStr, instance) {
+            instance.input.blur();
+        },
+    });
+
+    flatpickr("#endTime", {
+        enableTime: true,
+        dateFormat: "d-m-Y H:i",
+        time_24hr: true,
+        utc: true,
+        minuteIncrement: 1,
+        onChange: function (selectedDates, dateStr, instance) {
+            instance.input.blur();
+        },
+    });
+
+    const geoTimeZones = {
+        UA: "Europe/Kiev",
+        RU: "Europe/Moscow",
+        "CA-EN": "America/Toronto",
+        "CA-FR": "America/Toronto",
+        "RU(AZ)": "Asia/Baku",
+        AZ: "Asia/Baku",
+        "RU(KZ/UZ)": "Asia/Almaty",
+        KZ: "Asia/Almaty",
+        UZ: "Asia/Tashkent",
+        BD: "Asia/Dhaka",
+        HI: "Asia/Kolkata",
+        "HI-EN": "Asia/Kolkata",
+        "ES-GT": "America/Guatemala",
+        "ES-HN": "America/Tegucigalpa",
+        "ES-MX": "America/Mexico_City",
+        "ES-EC": "America/Guayaquil",
+        "ES-BO": "America/La_Paz",
+        "ES-CL": "America/Santiago",        
+        TR: "Europe/Istanbul",
+    };
+
+    const geoFormats = {
+        UA: "dd.MM.yyyy, HH:mm",
+        RU: "dd.MM.yyyy, HH:mm 'UTC+3'",
+        "CA-EN": "dd.MM.yyyy, hh:mm a",
+        "CA-FR": "dd.MM.yyyy, HH:mm",
+        "RU(AZ)": "dd.MM.yyyy, HH:mm",
+        AZ: "dd.MM.yyyy, HH:mm",
+        "RU(KZ/UZ)": "dd.MM.yyyy, HH:mm 'UTC+5'",
+        KZ: "dd.MM.yyyy, HH:mm",
+        UZ: "dd.MM.yyyy, HH:mm",
+        BD: "dd.MM.yyyy, hh:mm a '(GMT+6)'",
+        HI: "dd.MM.yyyy, HH:mm 'GMT+5:30'",
+        "HI-EN": "dd.MM.yyyy, HH:mm 'GMT+5:30'",
+        "ES-GT": "dd.MM.yyyy, HH:mm",
+        "ES-HN": "dd.MM.yyyy, HH:mm",
+        "ES-MX": "dd.MM.yyyy, HH:mm",
+        "ES-EC": "dd.MM.yyyy, HH:mm",
+        "ES-BO": "dd.MM.yyyy, HH:mm",
+        "ES-CL": "dd.MM.yyyy, HH:mm",
+        TR: "dd.MM.yyyy, HH:mm 'TSİ'",
+    };
+
+    function convertTime() {
+        const selectedTimeZone = document.querySelector(
+            'input[name="timezone"]:checked'
+        ).value;
+
+        const startTimeInput = document.getElementById("startTime").value;
+        const endTimeInput = document.getElementById("endTime").value;
+
+        let startTime = null;
+        let endTime = null;
+
+        if (startTimeInput) {
+            startTime = luxon.DateTime.fromFormat(startTimeInput, "d-M-yyyy H:mm", {
+                zone: selectedTimeZone,
+            });
+        }
+        if (endTimeInput) {
+            endTime = luxon.DateTime.fromFormat(endTimeInput, "d-M-yyyy H:mm", {
+                zone: selectedTimeZone,
+            });
+        }
+
+        let resultHTML = "";
+
+        Object.keys(geoTimeZones).forEach((geo) => {
+            let formattedStartTime = null;
+            let formattedEndTime = null;
+
+            let startTimeConverted = null;
+            let endTimeConverted = null;
+
+            if (startTime) {
+                startTimeConverted = startTime.setZone(geoTimeZones[geo]);
+                formattedStartTime = startTimeConverted.toFormat(geoFormats[geo]);
+            }
+
+            if (endTime) {
+                endTimeConverted = endTime.setZone(geoTimeZones[geo]);
+                formattedEndTime = endTimeConverted.toFormat(geoFormats[geo]);
+            }
+
+
+            if (startTime) {
+                const startTimeConverted = startTime.setZone(geoTimeZones[geo]);
+                if (geo === 'CA-EN') {
+                    const isDaylightSaving = startTimeConverted.isInDST;
+                    const timeZoneAbbr = isDaylightSaving ? 'EDT' : 'EST';
+                    formattedStartTime = startTimeConverted.toFormat(geoFormats[geo]).replace("AM", "am").replace("PM", "pm") + ` ${timeZoneAbbr}`;
+                } else if (geo === 'CA-FR') {
+                    const isDaylightSaving = startTimeConverted.isInDST;
+                    const timeZoneAbbr = isDaylightSaving ? 'HAE' : 'HNE';
+                    formattedStartTime = startTimeConverted.toFormat('dd.MM.yyyy, HH:mm') + ` ${timeZoneAbbr}`;
+                } else if (geo === 'UA') {
+                    const isDaylightSaving = startTimeConverted.isInDST;
+                    const timeZoneAbbr = isDaylightSaving ? 'UTC+3' : 'UTC+2';
+                    formattedStartTime = startTimeConverted.toFormat('dd.MM.yyyy, HH:mm') + ` ${timeZoneAbbr}`;
+                } else {
+                    formattedStartTime = startTimeConverted.toFormat(geoFormats[geo]);
+                }
+            }
+
+            if (endTime) {
+                const endTimeConverted = endTime.setZone(geoTimeZones[geo]);
+                if (geo === 'CA-EN') {
+                    const isDaylightSaving = endTimeConverted.isInDST;
+                    const timeZoneAbbr = isDaylightSaving ? 'EDT' : 'EST';
+                    formattedEndTime = endTimeConverted.toFormat(geoFormats[geo]).replace("AM", "am").replace("PM", "pm") + ` ${timeZoneAbbr}`;
+                } else if (geo === 'CA-FR') {
+                    const isDaylightSaving = endTimeConverted.isInDST;
+                    const timeZoneAbbr = isDaylightSaving ? 'HAE' : 'HNE';
+                    formattedEndTime = endTimeConverted.toFormat('dd.MM.yyyy, HH:mm') + ` ${timeZoneAbbr}`;
+                } else if (geo === 'UA') {
+                    const isDaylightSaving = endTimeConverted.isInDST;
+                    const timeZoneAbbr = isDaylightSaving ? 'UTC+3' : 'UTC+2';
+                    formattedEndTime = endTimeConverted.toFormat('dd.MM.yyyy, HH:mm') + ` ${timeZoneAbbr}`;
+                } else {
+                    formattedEndTime = endTimeConverted.toFormat(geoFormats[geo]);
+                }
+            }
+
+            if (formattedStartTime && formattedEndTime) {
+                if (geo === 'KZ') {
+                    // Формат для КЗ, добавляем текст только в конце диапазона
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} Астана уақыты бойынша</span></p>`;
+                } else if (geo === 'HI') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} से ${formattedEndTime}</span></p>`;
+                } else if (geo === 'RU(AZ)') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} по Баку</span></p>`;
+                } else if (geo === 'AZ') {
+                    // Формат для AZ: добавляем текст после даты, перед временем, только в конце диапазона
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${endTimeConverted.toFormat("dd.MM.yyyy, 'Bakı vaxtı ilə' HH:mm")}</span></p>`;
+                } else if (geo === 'UZ') {
+                    // Формат для UZ: добавляем текст после даты, перед временем, только в конце диапазона
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${endTimeConverted.toFormat("dd.MM.yyyy, 'Toshkent vaqti bilan' HH:mm")}</span></p>`;
+                } else if (geo === 'ES-GT') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} hora de Guatemala</span></p>`;
+                } else if (geo === 'ES-HN') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} hora de Honduras</span></p>`;
+                } else if (geo === 'ES-MX') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} CDMX, Mexico</span></p>`;
+                } else if (geo === 'ES-EC') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} hora de Ecuador</span></p>`;
+                } else if (geo === 'ES-BO') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} hora de Bolivia</span></p>`;
+                } else if (geo === 'ES-CL') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} hora de Chile</span></p>`;
+                } else {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime}</span></p>`;
+                }
+            } else if (formattedStartTime) {
+                if (geo === 'KZ') {
+                    // Формат для КЗ, добавляем текст только для начального времени
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} Астана уақыты бойынша</span></p>`;
+                } else if (geo === 'HI') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime}</span></p>`;
+                } else if (geo === 'RU(AZ)') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} по Баку</span></p>`;
+                } else if (geo === 'AZ') {
+                    // Формат для AZ: текст после даты, перед временем
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${startTimeConverted.toFormat("dd.MM.yyyy, 'Bakı vaxtı ilə' HH:mm")}</span></p>`;
+                } else if (geo === 'UZ') {
+                    // Формат для UZ: текст после даты, перед временем
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${startTimeConverted.toFormat("dd.MM.yyyy, 'Toshkent vaqti bilan' HH:mm")}</span></p>`;
+                } else if (geo === 'ES-GT') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} hora de Guatemala</span></p>`;
+                } else if (geo === 'ES-HN') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} hora de Honduras</span></p>`;
+                } else if (geo === 'ES-MX') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} CDMX, Mexico</span></p>`;
+                } else if (geo === 'ES-EC') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} hora de Ecuador</span></p>`;
+                } else if (geo === 'ES-BO') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} hora de Bolivia</span></p>`;
+                } else if (geo === 'ES-CL') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} hora de Chile</span></p>`;
+                } else {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime}</span></p>`;
+                }
+            } else if (formattedEndTime) {
+                if (geo === 'KZ') {
+                    // Формат для КЗ, добавляем текст только для конечного времени
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} Астана уақыты бойынша</span></p>`;
+                } else if (geo === 'HI') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime}</span></p>`;
+                 } else if (geo === 'RU(AZ)') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} по Баку</span></p>`;
+                } else if (geo === 'AZ') {
+                    // Формат для AZ: текст после даты, перед временем
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${endTimeConverted.toFormat("dd.MM.yyyy, 'Bakı vaxtı ilə' HH:mm")}</span></p>`;
+                } else if (geo === 'UZ') {
+                    // Формат для UZ: текст после даты, перед временем
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${endTimeConverted.toFormat("dd.MM.yyyy, 'Toshkent vaqti bilan' HH:mm")}</span></p>`;
+                } else if (geo === 'ES-GT') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} hora de Guatemala</span></p>`;
+                } else if (geo === 'ES-HN') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} hora de Honduras</span></p>`;
+                } else if (geo === 'ES-MX') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} CDMX, Mexico</span></p>`;
+                } else if (geo === 'ES-EC') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} hora de Ecuador</span></p>`;
+                } else if (geo === 'ES-BO') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} hora de Bolivia</span></p>`;
+                } else if (geo === 'ES-CL') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} hora de Chile</span></p>`;
+                } else {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime}</span></p>`;
+                }
+            }
+
+        });
+
+        document.getElementById("result").innerHTML = resultHTML;
+
+        document.querySelectorAll(".copyable-item").forEach((item) => {
+            item.addEventListener("click", function () {
+                const copyContent = this.querySelector(".copy-content").innerText;
+                navigator.clipboard.writeText(copyContent).then(() => {
+                    const copiedSpan = document.createElement("span");
+                    copiedSpan.className = "copied show-copied";
+                    copiedSpan.innerText = "copied";
+                    this.appendChild(copiedSpan);
+                    setTimeout(() => {
+                        copiedSpan.remove();
+                    }, 1000);
+                });
+            });
+        });
+    }
+</script>
+
+
+</body>
+</html>
