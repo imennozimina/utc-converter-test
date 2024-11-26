@@ -209,24 +209,24 @@
 
     const geoFormats = {
         UA: "dd.MM.yyyy, HH:mm",
-        RU: "dd.MM.yyyy, HH:mm 'UTC+3'",
+        RU: "dd.MM.yyyy, HH:mm",
         "CA-EN": "dd.MM.yyyy, hh:mm a",
         "CA-FR": "dd.MM.yyyy, HH:mm",
         "RU(AZ)": "dd.MM.yyyy, HH:mm",
         AZ: "dd.MM.yyyy, HH:mm",
-        "RU(KZ/UZ)": "dd.MM.yyyy, HH:mm 'UTC+5'",
+        "RU(KZ/UZ)": "dd.MM.yyyy, HH:mm",
         KZ: "dd.MM.yyyy, HH:mm",
         UZ: "dd.MM.yyyy, HH:mm",
-        BD: "dd.MM.yyyy, hh:mm a '(GMT+6)'",
-        HI: "dd.MM.yyyy, HH:mm 'GMT+5:30'",
-        "HI-EN": "dd.MM.yyyy, HH:mm 'GMT+5:30'",
+        BD: "dd.MM.yyyy, hh:mm a",
+        HI: "dd.MM.yyyy, HH:mm",
+        "HI-EN": "dd.MM.yyyy, HH:mm",
         "ES-GT": "dd.MM.yyyy, HH:mm",
         "ES-HN": "dd.MM.yyyy, HH:mm",
         "ES-MX": "dd.MM.yyyy, HH:mm",
         "ES-EC": "dd.MM.yyyy, HH:mm",
         "ES-BO": "dd.MM.yyyy, HH:mm",
         "ES-CL": "dd.MM.yyyy, HH:mm",
-        TR: "dd.MM.yyyy, HH:mm 'TSİ'",
+        TR: "dd.MM.yyyy, HH:mm",
     };
 
     function convertTime() {
@@ -313,16 +313,22 @@
                 if (geo === 'KZ') {
                     // Формат для КЗ, добавляем текст только в конце диапазона
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} Астана уақыты бойынша</span></p>`;
+                } else if (geo === 'RU') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} UTC+3</span></p>`;
+                } else if (geo === 'RU(KZ/UZ)') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} UTC+5</span></p>`;
                 } else if (geo === 'HI') {
-                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} से ${formattedEndTime}</span></p>`;
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} से ${formattedEndTime} GMT+5:30</span></p>`;
+                } else if (geo === 'HI-EN') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} GMT+5:30</span></p>`;
                 } else if (geo === 'RU(AZ)') {
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} по Баку</span></p>`;
                 } else if (geo === 'AZ') {
-                    // Формат для AZ: добавляем текст после даты, перед временем, только в конце диапазона
-                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${endTimeConverted.toFormat("dd.MM.yyyy, 'Bakı vaxtı ilə' HH:mm")}</span></p>`;
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} Bakı vaxtı ilə</span></p>`;
                 } else if (geo === 'UZ') {
-                    // Формат для UZ: добавляем текст после даты, перед временем, только в конце диапазона
-                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${endTimeConverted.toFormat("dd.MM.yyyy, 'Toshkent vaqti bilan' HH:mm")}</span></p>`;
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} Toshkent vaqti bilan</span></p>`;
+                } else if (geo === 'BD') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} (GMT+6)</span></p>`;
                 } else if (geo === 'ES-GT') {
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} hora de Guatemala</span></p>`;
                 } else if (geo === 'ES-HN') {
@@ -335,6 +341,8 @@
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} hora de Bolivia</span></p>`;
                 } else if (geo === 'ES-CL') {
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} hora de Chile</span></p>`;
+                } else if (geo === 'TR') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime} TSİ</span></p>`;
                 } else {
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} – ${formattedEndTime}</span></p>`;
                 }
@@ -342,16 +350,22 @@
                 if (geo === 'KZ') {
                     // Формат для КЗ, добавляем текст только для начального времени
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} Астана уақыты бойынша</span></p>`;
+                } else if (geo === 'RU') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} UTC+3</span></p>`;
+                } else if (geo === 'RU(KZ/UZ)') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} UTC+5</span></p>`;
                 } else if (geo === 'HI') {
-                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime}</span></p>`;
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} GMT+5:30</span></p>`;
+                } else if (geo === 'HI-EN') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} GMT+5:30</span></p>`;
                 } else if (geo === 'RU(AZ)') {
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} по Баку</span></p>`;
                 } else if (geo === 'AZ') {
-                    // Формат для AZ: текст после даты, перед временем
-                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${startTimeConverted.toFormat("dd.MM.yyyy, 'Bakı vaxtı ilə' HH:mm")}</span></p>`;
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} Bakı vaxtı ilə</span></p>`;
                 } else if (geo === 'UZ') {
-                    // Формат для UZ: текст после даты, перед временем
-                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${startTimeConverted.toFormat("dd.MM.yyyy, 'Toshkent vaqti bilan' HH:mm")}</span></p>`;
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} Toshkent vaqti bilan</span></p>`;
+                } else if (geo === 'BD') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} (GMT+6)</span></p>`;
                 } else if (geo === 'ES-GT') {
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} hora de Guatemala</span></p>`;
                 } else if (geo === 'ES-HN') {
@@ -364,6 +378,8 @@
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} hora de Bolivia</span></p>`;
                 } else if (geo === 'ES-CL') {
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} hora de Chile</span></p>`;
+                } else if (geo === 'TR') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime} TSİ</span></p>`;
                 } else {
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedStartTime}</span></p>`;
                 }
@@ -371,16 +387,22 @@
                 if (geo === 'KZ') {
                     // Формат для КЗ, добавляем текст только для конечного времени
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} Астана уақыты бойынша</span></p>`;
+                } else if (geo === 'RU') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} UTC+3</span></p>`;
+                } else if (geo === 'RU(KZ/UZ)') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} UTC+5</span></p>`;
                 } else if (geo === 'HI') {
-                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime}</span></p>`;
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} GMT+5:30</span></p>`;
+                } else if (geo === 'HI-EN') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} GMT+5:30</span></p>`;
                  } else if (geo === 'RU(AZ)') {
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} по Баку</span></p>`;
                 } else if (geo === 'AZ') {
-                    // Формат для AZ: текст после даты, перед временем
-                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${endTimeConverted.toFormat("dd.MM.yyyy, 'Bakı vaxtı ilə' HH:mm")}</span></p>`;
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} Bakı vaxtı ilə</span></p>`;
                 } else if (geo === 'UZ') {
-                    // Формат для UZ: текст после даты, перед временем
-                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${endTimeConverted.toFormat("dd.MM.yyyy, 'Toshkent vaqti bilan' HH:mm")}</span></p>`;
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} Toshkent vaqti bilan</span></p>`;
+                } else if (geo === 'BD') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} (GMT+6)</span></p>`;
                 } else if (geo === 'ES-GT') {
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} hora de Guatemala</span></p>`;
                 } else if (geo === 'ES-HN') {
@@ -393,6 +415,8 @@
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} hora de Bolivia</span></p>`;
                 } else if (geo === 'ES-CL') {
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} hora de Chile</span></p>`;
+                } else if (geo === 'TR') {
+                    resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime} TSİ</span></p>`;
                 } else {
                     resultHTML += `<p class="copyable-item"><span class="geo-label">${geo}:</span><span class="copy-content">${formattedEndTime}</span></p>`;
                 }
